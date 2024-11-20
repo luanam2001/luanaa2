@@ -1,4 +1,3 @@
-let font;
 let tSize = 150; // Tamaño del texto
 let tposX = 250; // Posición X del texto "designer"
 let tposY = 500; // Posición Y del texto "designer"
@@ -6,24 +5,32 @@ let tposX2 = 250; // Posición X del texto "luana"
 let tposY2 = 700; // Posición Y del texto "luana"
 let pointCount = 0.5; // Densidad de puntos
 
-let speed = 5; // Velocidad de las partículas
+let speed = 8; // Velocidad de las partículas
 let comebackSpeed = 100; // A menor valor, menos interacción
 let dia = 70; // Diámetro de interacción
-let randomPos = true; // Puntos en posición inicial aleatoria
+let randomPos = false; // Puntos comienzan desde el centro
 let pointsDirection = "left"; // Dirección de puntos
 let interactionDirection = -1; // -1 y 1
 
 let textPointsDesigner = [];
 let textPointsLuana = [];
 let colorFixed = false; // Variable para determinar si el color debe detenerse
+let bgColor; // Variable para el color de fondo
 
 function preload() {
   font = loadFont("AvenirNextLTPro-Demi.otf");
 }
 
 function setup() {
-  createCanvas(1000, 1000);
+  createCanvas(windowWidth, windowHeight);
+  
+  tposX = width/2 - tSize * 1.9
+  tposY = height/2 - tSize / 2.8
+  tposX2 = width/2 - tSize * 1.9
+  tposY2 = height/2 + tSize / 2.0
+  
   textFont(font);
+  bgColor = color(0); // Fondo inicial negro
 
   // Crear partículas para la palabra "designer"
   let pointsDesigner = font.textToPoints("designer", tposX, tposY, tSize, {
@@ -32,8 +39,8 @@ function setup() {
   for (let i = 0; i < pointsDesigner.length; i++) {
     let pt = pointsDesigner[i];
     let textPoint = new Interact(
-      pt.x,
-      pt.y,
+      width / 2, // Comienza en el centro
+      height / 2, // Comienza en el centro
       speed,
       dia,
       randomPos,
@@ -41,6 +48,7 @@ function setup() {
       pointsDirection,
       interactionDirection
     );
+    textPoint.target = createVector(pt.x, pt.y); // Establecer el destino en la posición final
     textPointsDesigner.push(textPoint);
   }
 
@@ -51,8 +59,8 @@ function setup() {
   for (let i = 0; i < pointsLuana.length; i++) {
     let pt = pointsLuana[i];
     let textPoint = new Interact(
-      pt.x,
-      pt.y,
+      width / 2, // Comienza en el centro
+      height / 2, // Comienza en el centro
       speed,
       dia,
       randomPos,
@@ -60,12 +68,13 @@ function setup() {
       pointsDirection,
       interactionDirection
     );
+    textPoint.target = createVector(pt.x, pt.y); // Establecer el destino en la posición final
     textPointsLuana.push(textPoint);
   }
 }
 
 function draw() {
-  background(0);
+  background(bgColor);
 
   let allArrivedDesigner = true; // Variable para "designer"
   let allArrivedLuana = true; // Variable para "luana"
@@ -82,6 +91,7 @@ function draw() {
     }
   }
 
+
   // Dibujar puntos para "luana"
   for (let i = 0; i < textPointsLuana.length; i++) {
     let v = textPointsLuana[i];
@@ -94,15 +104,22 @@ function draw() {
     }
   }
 
-  // Si ambas palabras han llegado, detener el cambio de color y fijarlo en azul
+  // Si ambas palabras han llegado, fijar el color y el fondo anaranjado
   if (allArrivedDesigner && allArrivedLuana) {
     colorFixed = true;
+    bgColor = color(255, 165, 0); // Fijar el fondo en anaranjado
+  } else {
+    // Fondo dinámico cambiando de color
+    let r = map(sin(frameCount * 0.01), -1, 1, 0, 255);
+    let g = map(cos(frameCount * 0.01), -1, 1, 0, 100);
+    let b = map(sin(frameCount * 0.01), -1, 1, 0, 50);
+    bgColor = color(r, g, b);
   }
 }
 
 // Clase Interact modificada
 function Interact(x, y, m, d, t, s, di, p) {
-  this.home = t ? createVector(random(width), random(height)) : createVector(x, y);
+  this.home = createVector(x, y); // Comienza en el centro
   this.pos = this.home.copy();
   this.target = createVector(x, y);
 
@@ -127,7 +144,6 @@ function Interact(x, y, m, d, t, s, di, p) {
   this.dir = p;
 }
 
-// Método para verificar si el punto ha llegado a su posición final
 Interact.prototype.atHome = function () {
   return p5.Vector.dist(this.pos, this.target) < 1;
 };
@@ -183,7 +199,7 @@ Interact.prototype.show = function () {
     // Color fijo azul cuando los puntos han llegado a su posición final
     stroke(0, 0, 255); // Color azul
   } else {
-    // Cambiar colores dinámicamente usando sinusoides y `frameCount`
+    // Cambiar colores dinámicamente usando sinusoides y frameCount
     let r = map(sin(frameCount * 0.05), -1, 1, 100, 255);
     let g = map(sin(frameCount * 0.03), -1, 1, 100, 255);
     let b = map(sin(frameCount * 0.07), -1, 1, 100, 255);
@@ -192,4 +208,4 @@ Interact.prototype.show = function () {
   }
   strokeWeight(4);
   point(this.pos.x, this.pos.y);
-};
+}
